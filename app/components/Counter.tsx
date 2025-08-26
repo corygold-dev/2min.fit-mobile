@@ -1,14 +1,16 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Audio } from "expo-av";
 import { JSX, useContext, useEffect, useState } from "react";
-import { FaYoutube } from "react-icons/fa";
-import { StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import type { CounterContextType } from "../../providers/CounterProvider";
 import { CounterContext } from "../../providers/CounterProvider";
 import type { ExerciseContextType } from "../../providers/ExerciseProvider";
 import { ExerciseContext } from "../../providers/ExerciseProvider";
 import type { ProgramContextType } from "../../providers/ProgramProvider";
 import { ProgramContext } from "../../providers/ProgramProvider";
+import { Button, Text } from "react-native-paper";
 
 export default function Counter(): JSX.Element {
   const { timerStarted, setTimerStarted } = useContext(
@@ -92,35 +94,61 @@ export default function Counter(): JSX.Element {
     }
     handleButtonContent();
     handleCount();
-    timerStarted &&
-      counter > 0 &&
-      setTimeout(() => setCounter(counter - 1), 1000);
   });
 
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (timerStarted && counter > 0) {
+      intervalId = setInterval(() => setCounter((prev) => prev - 1), 1000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [timerStarted, counter]);
+
+  const handleOpenLink = async () => {
+    await WebBrowser.openBrowserAsync(exerciseLink);
+  };
+
   return (
-    <div>
-      <div style={styles.counter}>{counter}</div>
-      <div style={styles.videoStartButtons}>
-        <a href={exerciseLink} target="_blank" rel="noreferrer">
-          <button style={styles.videoButton}>
-            <FaYoutube />
-          </button>
-        </a>
-        <button style={styles.timerButton} onClick={handleButtonClick}>
+    <View>
+      <Text style={styles.counter}>{counter}</Text>
+      <View style={styles.videoStartButtons}>
+        <Button
+          mode="elevated"
+          onPress={handleOpenLink}
+          style={styles.videoButton}
+        >
+          <Ionicons name="logo-youtube" size={24} color="red" />
+        </Button>
+        <Button
+          mode="elevated"
+          onPress={handleButtonClick}
+          style={styles.timerButton}
+          disabled={buttonContent === "Get Ready!"}
+        >
           {buttonContent}
-        </button>
-      </div>
-    </div>
+        </Button>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   videoStartButtons: {
     display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginTop: 10,
   },
   counter: {
     fontSize: 80,
     marginBottom: 16,
+    textAlign: "center",
   },
   timerButton: {
     width: 175,
